@@ -31,6 +31,9 @@ impl Opt {
     }
 }
 
+const VERSION: &'static str = env!("CARGO_PKG_VERSION");
+const DESCRIPTION: &'static str = env!("CARGO_PKG_DESCRIPTION");
+
 fn main() {
     env_logger::init().unwrap();
 
@@ -64,6 +67,11 @@ fn main() {
                 help();
                 return;
             },
+            "--version" => {
+                println!("creq v{}", VERSION);
+                println!("{}", DESCRIPTION);
+                return;
+            }
             url => {
                 opt.url(url.to_string());
             }

@@ -1,7 +1,7 @@
 [package]
 name = "creq"
 version = "0.1.0"
-description = "command line tool"
+description = "command line tool for HTTP request"
 authors = ["mysangle <mysangle@gmail.com>"]
 license = "MIT"
 

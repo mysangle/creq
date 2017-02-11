@@ -2,15 +2,19 @@ extern crate reqwest;
 extern crate env_logger;
 
 use std::env;
+use std::str::FromStr;
+use reqwest::Method;
 
 pub struct Opt {
     url: Option<String>,
+    method: Method,
 }
 
 impl Opt {
     pub fn new() -> Opt {
         Opt {
             url: None,
+            method: Method::Get,
         }
     }
 
@@ -20,6 +24,10 @@ impl Opt {
 
     pub fn is_valid(&self) -> bool {
         return self.url.is_some();
+    }
+
+    pub fn method(&mut self, method: Method) {
+        self.method = method;
     }
 }
 
@@ -48,6 +56,10 @@ fn main() {
                     }
                 }
             },
+            "--request" => {
+                let method = arguments.next().unwrap().to_uppercase();
+                opt.method(FromStr::from_str(method.as_str()).unwrap());
+            },
             "--help" => {
                 help();
                 return;
@@ -62,8 +74,9 @@ fn main() {
         help();
         return;
     }
-    
-    let res = reqwest::get(&opt.url.unwrap()).unwrap();
+
+    let client = reqwest::Client::new().unwrap();
+    let res = client.request(opt.method, &opt.url.unwrap()).send().unwrap();
 
     println!("Status: {}", res.status());
     println!("Headers:\n{}", res.headers());
@@ -72,4 +85,5 @@ fn main() {
 fn help() {
     println!("Usage: creq [options...] <url>");
     println!("  --url <url>");
+    println!("  --request COMMAND")
 }

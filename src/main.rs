@@ -48,16 +48,7 @@ fn main() {
     while let Some(arg) = arguments.next() {
         match arg.as_str() {
             "--url" => {
-                match arguments.next() {
-                    Some(url) => {
-                        opt.url(url);
-                    },
-                    None => {
-                        println!("creq: option --url: requires parameter");
-                        println!("creq: try 'creq --help' for more information");
-                        return;
-                    }
-                }
+                opt.url(arguments.next().unwrap());
             },
             "--request" => {
                 let method = arguments.next().unwrap().to_uppercase();

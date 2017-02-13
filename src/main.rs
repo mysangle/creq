@@ -1,11 +1,17 @@
 extern crate reqwest;
 extern crate env_logger;
 
+mod cmd_option;
+mod error;
+
+use cmd_option::CmdOpt;
+use error::Error;
+
 use std::env;
 use std::str::FromStr;
 use reqwest::Method;
 
-pub struct Opt {
+struct Opt {
     url: Option<String>,
     method: Method,
 }
@@ -46,27 +52,39 @@ fn main() {
 
     let mut opt = Opt::new();
     while let Some(arg) = arguments.next() {
-        match arg.as_str() {
-            "--url" => {
-                opt.url(arguments.next().unwrap());
-            },
-            "--request" => {
-                let method = arguments.next().unwrap().to_uppercase();
-                opt.method(FromStr::from_str(method.as_str()).unwrap());
-            },
-            "--help" => {
-                help();
-                return;
-            },
-            "--version" => {
-                println!("creq v{}", VERSION);
-                println!("{}", DESCRIPTION);
-                return;
+        if arg.starts_with("--") {
+            let option: Result<CmdOpt, Error> = FromStr::from_str(arg.as_str());
+            match option {
+                Ok(value) => {
+                    match value {
+                        CmdOpt::URL => {
+                            opt.url(arguments.next().unwrap());
+                        },
+                        CmdOpt::REQUEST => {
+                            let method = arguments.next().unwrap().to_uppercase();
+                            opt.method(FromStr::from_str(method.as_str()).unwrap());
+                        },
+                        CmdOpt::HELP => {
+                            help();
+                            return;
+                        },
+                        CmdOpt::VERSION => {
+                            println!("creq v{}", VERSION);
+                            println!("{}", DESCRIPTION);
+                            return;
+                        } ,
+                    }
+                },
+                Err(err) => {
+                    println!("Invalid option: {}", err);
+                    println!("creq: try 'creq --help' for more information");
+                    return;
+                }
             }
-            url => {
-                opt.url(url.to_string());
-            }
+        } else {
+            opt.url(arg);
         }
+
     }
 
     if !opt.is_valid() {
@@ -82,7 +100,12 @@ fn main() {
 }
 
 fn help() {
-    println!("Usage: creq [options...] <url>");
-    println!("  --url <url>");
-    println!("  --request COMMAND")
+    println!("Usage:");
+    println!("  creq [options...] <url>");
+    println!();
+    println!("Options:");
+    println!("  --help             Display this message");
+    println!("  --request COMMAND  Specify HTTP method to use");
+    println!("  --url URL          URL to work with");
+    println!("  --version          Print version info and exit")
 }

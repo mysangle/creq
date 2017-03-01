@@ -3,13 +3,13 @@ use std::error::Error as StdError;
 use std::fmt;
 
 use self::Error::{
-    CmdOpt,
+    Command,
 };
 
 #[derive(Debug)]
 pub enum Error {
     /// An invalid `option`, such as `--qwer`
-    CmdOpt(String),
+    Command(String),
 }
 
 impl fmt::Display for Error {
@@ -23,7 +23,7 @@ impl fmt::Display for Error {
 impl StdError for Error {
     fn description(&self) -> &str {
         match *self {
-            CmdOpt(ref e) => e.as_str(),
+            Command(ref e) => e.as_str(),
         }
     }
 }

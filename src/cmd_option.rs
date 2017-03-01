@@ -31,7 +31,7 @@ impl FromStr for CmdOpt {
             "--request" => Ok(REQUEST),
             "--help" => Ok(HELP),
             "--version" => Ok(VERSION),
-            _ => Err(Error::CmdOpt(s.to_owned())),
+            _ => Err(Error::Command(s.to_owned())),
         }
     }
 }
@@ -47,7 +47,7 @@ mod tests {
     fn test_from_str() {
         assert_eq!(URL, FromStr::from_str("--url").unwrap());
         let x: Result<CmdOpt, _> = FromStr::from_str("--invalid");
-        if let Err(Error::CmdOpt) = x {
+        if let Err(Error::Command(_)) = x {
         } else {
             panic!("An option is invalid!")
         }

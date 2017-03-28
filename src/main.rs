@@ -1,4 +1,7 @@
-extern crate reqwest;
+extern crate futures;
+extern crate hyper;
+extern crate tokio_core;
+
 extern crate env_logger;
 
 mod cmd_option;
@@ -8,28 +11,36 @@ use cmd_option::CmdOpt;
 use error::Error;
 
 use std::env;
+use std::io::{self, Write};
 use std::str::FromStr;
-use reqwest::Method;
+
+use futures::Future;
+use futures::stream::Stream;
+
+use hyper::Client;
+use hyper::Method;
+use hyper::client::Request;
+use hyper::Uri;
 
 struct Opt {
-    url: Option<String>,
+    uri: Option<Uri>,
     method: Method,
 }
 
 impl Opt {
     pub fn new() -> Opt {
         Opt {
-            url: None,
+            uri: None,
             method: Method::Get,
         }
     }
 
     pub fn url(&mut self, url: String) {
-        self.url = Some(url);
+        self.uri = url.parse::<hyper::Uri>().ok();
     }
 
     pub fn is_valid(&self) -> bool {
-        return self.url.is_some();
+        self.uri.is_some()
     }
 
     pub fn method(&mut self, method: Method) {
@@ -92,11 +103,24 @@ fn main() {
         return;
     }
 
-    let client = reqwest::Client::new().unwrap();
-    let res = client.request(opt.method, &opt.url.unwrap()).send().unwrap();
+    let mut core = tokio_core::reactor::Core::new().unwrap();
+    let handle = core.handle();
+    let client = Client::new(&handle);
 
-    println!("Status: {}", res.status());
-    println!("Headers:\n{}", res.headers());
+    let req = Request::new(opt.method, opt.uri.unwrap());
+
+    let work = client.request(req).and_then(|res| {
+        println!("Status: {}", res.status());
+        println!("Headers:\n{}", res.headers());
+
+        res.body().for_each(|chunk| {
+            io::stdout().write_all(&chunk).map_err(From::from)
+        })
+    }).map(|_| {
+        println!("\n\nDone.");
+    });
+
+    core.run(work).unwrap();
 }
 
 fn help() {

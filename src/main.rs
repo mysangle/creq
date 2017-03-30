@@ -19,6 +19,7 @@ use futures::stream::Stream;
 
 use hyper::Client;
 use hyper::Method;
+use hyper::client::HttpsConnector;
 use hyper::client::Request;
 use hyper::Uri;
 
@@ -105,7 +106,9 @@ fn main() {
 
     let mut core = tokio_core::reactor::Core::new().unwrap();
     let handle = core.handle();
-    let client = Client::new(&handle);
+    let client = Client::configure()
+        .connector(HttpsConnector::new(4, &handle))
+        .build(&handle);
 
     let req = Request::new(opt.method, opt.uri.unwrap());
 
